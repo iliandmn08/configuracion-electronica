@@ -1,0 +1,568 @@
+<!doctype html>
+<html lang="es">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta charset="utf-8">
+<title>Configuración electrónica</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: cuaderno de laboratorio — selector de elementos arriba, mesa de trabajo (datos | orbitales) en el centro, reglas y práctica debajo */
+:root{
+  --bg:#f4f6fa; --surface:#ffffff; --ink:#141a2b; --muted:#5a6377; --line:#dce2ec;
+  --accent:#2c56e6; --accent-soft:#e6ecff;
+  --s:#e2574f; --p:#dc9420; --d:#22958f; --f:#7f5ad3;
+  --ok:#1f8a4c; --bad:#c43b3b;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible",ui-sans-serif,system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0d1120; --surface:#151b2e; --ink:#e7ebf5; --muted:#9aa3b9; --line:#29314a;
+  --accent:#86a2ff; --accent-soft:#1f2a4d;
+  --s:#f07a72; --p:#f0b555; --d:#45c2bb; --f:#a98bf2; --ok:#4cc27e; --bad:#f07070; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d1120; --surface:#151b2e; --ink:#e7ebf5; --muted:#9aa3b9; --line:#29314a;
+  --accent:#86a2ff; --accent-soft:#1f2a4d;
+  --s:#f07a72; --p:#f0b555; --d:#45c2bb; --f:#a98bf2; --ok:#4cc27e; --bad:#f07070; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.1}
+h1{font-size:clamp(2rem,5vw,3.1rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:1.5rem;font-weight:800}
+h3{font-size:1.1rem;font-weight:600}
+p{margin:0}
+.eyebrow{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.lead{max-width:62ch;color:var(--muted);font-size:1.05rem}
+header{display:flex;flex-direction:column;gap:10px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px}
+section{display:flex;flex-direction:column;gap:14px}
+.mono{font-family:var(--mono)}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+/* tabla periódica */
+.pt-scroll{overflow-x:auto;padding-bottom:4px}
+.pt{display:grid;grid-template-columns:repeat(18,minmax(30px,1fr));gap:3px;min-width:600px}
+.el{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:3px 0 2px;text-align:center;line-height:1.05;position:relative}
+.el b{display:block;font-family:var(--display);font-size:.95rem}
+.el small{font-size:.6rem;color:var(--muted)}
+.el::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;border-radius:6px 6px 0 0;background:var(--blk)}
+.el[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.el[aria-pressed="true"] small{color:var(--bg)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.85rem;color:var(--muted)}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;background:var(--c);vertical-align:-1px}
+
+/* mesa de trabajo */
+.bench{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:18px}
+@media (max-width:820px){.bench{grid-template-columns:1fr}}
+.tile{display:flex;gap:16px;align-items:center}
+.sym{width:92px;height:92px;border-radius:14px;border:2px solid var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;flex:none}
+.sym .z{position:absolute;top:5px;left:8px;font-size:.8rem;font-weight:700}
+.sym .s{font-family:var(--display);font-size:2.3rem;font-weight:800;line-height:1}
+.sym .chg{position:absolute;top:4px;right:8px;font-weight:700;font-size:.9rem;color:var(--accent)}
+.name{font-family:var(--display);font-size:1.6rem;font-weight:800}
+.sub{color:var(--muted);font-size:.92rem}
+.conf{font-family:var(--mono);font-size:1.15rem;line-height:1.9;word-break:break-word}
+.conf sup{font-size:.68em}
+.conf .o{white-space:nowrap;margin-right:.45em;padding:1px 3px;border-radius:4px}
+.lbl{font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px}
+.fact{border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.fact .v{font-family:var(--display);font-size:1.3rem;font-weight:800;font-variant-numeric:tabular-nums}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 14px;font-weight:700}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.sel{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip{border:1px solid var(--line);border-radius:8px;padding:4px 10px;font-family:var(--mono);font-weight:700;background:var(--surface)}
+.chip.sel{background:var(--accent);color:#fff;border-color:var(--accent)}
+.note{border-left:4px solid var(--accent);background:var(--accent-soft);padding:10px 12px;border-radius:0 10px 10px 0;font-size:.95rem}
+.note:empty{display:none}
+
+/* cajas de orbitales */
+.orbs{display:flex;flex-wrap:wrap;gap:14px 18px;align-items:flex-end}
+.ob{display:flex;flex-direction:column;align-items:center;gap:4px}
+.ob .boxes{display:flex}
+.box{width:30px;height:36px;border:2px solid var(--c);margin-left:-2px;display:flex;align-items:center;justify-content:center;gap:1px;font-weight:700;font-size:1.05rem;color:var(--c)}
+.box:first-child{margin-left:0}
+.box.new{background:var(--accent-soft)}
+.ob .t{font-family:var(--mono);font-weight:700;font-size:.9rem}
+.moeller svg{width:100%;max-width:360px;height:auto;display:block;margin:0 auto}
+
+/* reglas */
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.rule{display:flex;flex-direction:column;gap:8px}
+.rule .num{font-family:var(--display);font-weight:800;color:var(--accent)}
+.mini{display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:.85rem;color:var(--muted)}
+.mini .boxes{display:flex}
+.mini .box{--c:var(--ink);width:26px;height:30px;font-size:.95rem}
+.good{color:var(--ok);font-weight:700}.wrong{color:var(--bad);font-weight:700}
+
+/* anatomía */
+.anat{display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px;align-items:center}
+@media (max-width:600px){.anat{grid-template-columns:1fr}}
+.big{font-family:var(--mono);font-size:4.2rem;font-weight:700;line-height:1;letter-spacing:-.02em;display:flex;align-items:flex-start}
+.big .n{color:var(--accent)}.big .l{color:var(--d)}.big sup{font-size:.45em;color:var(--s);margin-top:.15em}
+.anat ul{margin:0;padding-left:1.1em;display:flex;flex-direction:column;gap:6px}
+table.cap{border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:.95rem}
+table.cap td,table.cap th{border-bottom:1px solid var(--line);padding:5px 12px;text-align:left}
+
+/* práctica */
+.quiz{display:flex;flex-direction:column;gap:12px}
+.q{font-size:1.1rem;font-weight:700}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:8px}
+.opt{text-align:left;border:2px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 12px;font-family:var(--mono);font-size:.95rem}
+.opt.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 14%,var(--surface))}
+.opt.no{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,var(--surface))}
+.score{font-family:var(--display);font-weight:800;font-variant-numeric:tabular-nums}
+
+.part{display:flex;flex-direction:column;gap:28px}
+.partHead{display:flex;flex-direction:column;gap:6px;border-top:2px solid var(--ink);padding-top:14px}
+.partHead .tag{font-family:var(--display);font-weight:800;font-size:.95rem;color:var(--accent);letter-spacing:.06em;text-transform:uppercase}
+.prose{display:flex;flex-direction:column;gap:10px;max-width:70ch}
+.steps4{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;counter-reset:st}
+.step4{display:flex;flex-direction:column;gap:6px}
+.step4 .k{font-family:var(--display);font-weight:800;font-size:2rem;line-height:1;color:var(--accent)}
+.orderline{font-family:var(--mono);font-weight:700;font-size:1rem;display:flex;flex-wrap:wrap;gap:6px}
+.orderline span{border:2px solid var(--c);color:var(--ink);border-radius:8px;padding:2px 8px}
+.orderline span small{color:var(--muted);font-weight:500;margin-left:4px}
+.tw{overflow-x:auto}
+table.work{border-collapse:collapse;font-variant-numeric:tabular-nums;min-width:320px}
+table.work th,table.work td{border-bottom:1px solid var(--line);padding:6px 12px;text-align:left}
+table.work td.m{font-family:var(--mono);font-weight:700}
+table.work tr.hide{display:none}
+.result{font-family:var(--mono);font-size:1.15rem;font-weight:700}
+.build-left{font-family:var(--display);font-size:2.6rem;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.choice{display:flex;flex-wrap:wrap;gap:8px}
+.choice .chip{font-size:1rem;padding:6px 14px}
+.chip.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.chip.no{background:var(--bad);border-color:var(--bad);color:#fff}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+<header>
+  <span class="eyebrow">Química · Estructura atómica</span>
+  <h1>Configuración electrónica</h1>
+  <p class="lead">Aprende a colocar los electrones de un átomo en niveles y subniveles. Primero la teoría, con ejemplos resueltos; después, práctica interactiva.</p>
+</header>
+
+
+<div class="part">
+<div class="partHead"><span class="tag">Parte 1 · Teoría</span><h2 style="font-size:1.9rem">Cómo se hace una configuración electrónica</h2>
+<p class="lead">Lee esto primero. Al final sabrás escribir la configuración de cualquier elemento con solo su número atómico.</p></div>
+
+<section aria-labelledby="t-what">
+  <h2 id="t-what">1 · ¿Qué es?</h2>
+  <div class="panel prose">
+    <p>Los electrones de un átomo no están colocados de cualquier manera: se reparten en <b>niveles de energía</b> (o capas), que se numeran <b>n = 1, 2, 3, 4…</b> desde el núcleo hacia fuera.</p>
+    <p>Cada nivel se divide en <b>subniveles</b>, que se nombran con letras: <b style="color:var(--s)">s</b>, <b style="color:var(--p)">p</b>, <b style="color:var(--d)">d</b> y <b style="color:var(--f)">f</b>. En cada subnivel cabe un número máximo de electrones.</p>
+    <p>La <b>configuración electrónica</b> es simplemente una lista que dice cuántos electrones hay en cada subnivel, en el orden en que se llenan.</p>
+  </div>
+</section>
+
+<section aria-labelledby="t-read">
+  <h2 id="t-read">2 · Cómo se lee y cuánto cabe</h2>
+  <div class="panel anat">
+    <div class="big" aria-label="3d5"><span class="n">3</span><span class="l">d</span><sup>5</sup></div>
+    <ul>
+      <li><b style="color:var(--accent)">3</b> = nivel de energía <i>n</i> (la capa). Cuanto mayor, más lejos del núcleo.</li>
+      <li><b style="color:var(--d)">d</b> = tipo de subnivel: <b>s, p, d, f</b>.</li>
+      <li><b style="color:var(--s)">5</b> = cuántos electrones hay en ese subnivel.</li>
+      <li>La suma de todos los superíndices = número de electrones (= Z en un átomo neutro).</li>
+    </ul>
+  </div>
+  <div class="panel" style="overflow-x:auto">
+    <table class="cap">
+      <tr><th>Subnivel</th><th>Máx. electrones</th><th>Aparece desde el nivel</th></tr>
+      <tr><td><b style="color:var(--s)">s</b></td><td>2</td><td>n = 1</td></tr>
+      <tr><td><b style="color:var(--p)">p</b></td><td>6</td><td>n = 2</td></tr>
+      <tr><td><b style="color:var(--d)">d</b></td><td>10</td><td>n = 3</td></tr>
+      <tr><td><b style="color:var(--f)">f</b></td><td>14</td><td>n = 4</td></tr>
+    </table>
+    <p class="sub" style="margin-top:8px">Truco: s-p-d-f → 2-6-10-14 (de 4 en 4). El nivel 1 solo tiene s; el 2 tiene s y p; el 3 tiene s, p y d.</p>
+  </div>
+</section>
+
+<section aria-labelledby="t-moe">
+  <h2 id="t-moe">3 · El orden de llenado: diagrama de Moeller</h2>
+  <div class="bench">
+    <div class="panel prose">
+      <p>Los subniveles <b>no</b> se llenan en orden 1, 2, 3… Para saber el orden se usa el <b>diagrama de Moeller</b> (regla de las diagonales):</p>
+      <ol style="margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px">
+        <li>Escribe los subniveles en filas: <span class="mono">1s</span> / <span class="mono">2s 2p</span> / <span class="mono">3s 3p 3d</span> / <span class="mono">4s 4p 4d 4f</span>…</li>
+        <li>Traza flechas en <b>diagonal</b>, de arriba a la derecha hacia abajo a la izquierda.</li>
+        <li>Lee los subniveles siguiendo las flechas, una detrás de otra.</li>
+      </ol>
+      <p>Resultado (apréndetelo o dibuja el diagrama en el examen):</p>
+      <div class="orderline" id="orderline"></div>
+      <p class="sub">Fíjate: el <b>4s va antes que el 3d</b>, y el 5s antes que el 4d. Es el error más típico.</p>
+    </div>
+    <div class="panel moeller"><svg id="moeT" viewBox="0 0 330 345" role="img" aria-label="Diagrama de Moeller vacío"></svg></div>
+  </div>
+</section>
+
+<section aria-labelledby="t-how">
+  <h2 id="t-how">4 · El método en 4 pasos</h2>
+  <div class="steps4">
+    <div class="panel step4"><span class="k">1</span><h3>Cuenta los electrones</h3><p>Busca el número atómico <b>Z</b> en la tabla periódica. En un átomo neutro, <b>nº de electrones = Z</b>.</p></div>
+    <div class="panel step4"><span class="k">2</span><h3>Escribe el orden</h3><p>Escribe los subniveles en el orden de Moeller: 1s 2s 2p 3s 3p 4s 3d…</p></div>
+    <div class="panel step4"><span class="k">3</span><h3>Rellena</h3><p>Pon en cada subnivel <b>el máximo</b> (s→2, p→6, d→10) y resta. Cuando queden menos electrones que el máximo, pon los que queden y <b>para</b>.</p></div>
+    <div class="panel step4"><span class="k">4</span><h3>Comprueba</h3><p>Suma todos los superíndices: tiene que darte <b>Z</b>. Si no, te has saltado o repetido algo.</p></div>
+  </div>
+</section>
+
+<section aria-labelledby="t-ex">
+  <h2 id="t-ex">5 · Ejemplos resueltos, paso a paso</h2>
+  <div class="panel" style="display:flex;flex-direction:column;gap:12px">
+    <div class="row" id="exPick"></div>
+    <p id="exIntro"></p>
+    <div class="tw"><table class="work"><thead><tr><th>Paso</th><th>Subnivel</th><th>Pongo</th><th>Me quedan</th></tr></thead><tbody id="exBody"></tbody></table></div>
+    <div class="row"><button class="btn primary" id="exNext">Siguiente paso →</button><button class="btn" id="exAll">Ver todo</button></div>
+    <div class="note" id="exRes"></div>
+  </div>
+</section>
+
+<section aria-labelledby="t-val">
+  <h2 id="t-val">6 · Para qué sirve: capas, valencia y tabla periódica</h2>
+  <div class="panel prose">
+    <p><b>Electrones por capa:</b> suma los electrones de cada nivel. Sodio: 1s² 2s² 2p⁶ 3s¹ → capas <b>2 · 8 · 1</b>.</p>
+    <p><b>Electrones de valencia:</b> los de la <b>última capa</b> (el número <i>n</i> más alto). El sodio tiene 1; el cloro (…3s² 3p⁵) tiene 2 + 5 = 7. Son los que participan en los enlaces.</p>
+    <p><b>Periodo</b> = número del último nivel ocupado. Sodio → nivel 3 → periodo 3.</p>
+    <p><b>Grupo</b> (bloques s y p): si acaba en s¹ → grupo 1, en s² → grupo 2; si acaba en p¹…p⁶ → grupos 13…18.</p>
+    <p><b>Gases nobles</b> (He, Ne, Ar, Kr…): su última capa está llena (s² p⁶). Son muy estables, y los demás átomos tienden a parecerse a ellos ganando o perdiendo electrones.</p>
+  </div>
+</section>
+
+<section aria-labelledby="t-ion">
+  <h2 id="t-ion">7 · Iones y forma abreviada</h2>
+  <div class="rules">
+    <div class="panel rule"><span class="num">Iones</span>
+      <p>Primero cuenta los electrones: un <b>anión</b> (carga −) tiene <b>más</b>; un <b>catión</b> (carga +) tiene <b>menos</b>.</p>
+      <p class="mono" style="font-size:.92rem">Cl⁻: 17 + 1 = 18 e⁻ → 1s² 2s² 2p⁶ 3s² 3p⁶<br>Na⁺: 11 − 1 = 10 e⁻ → 1s² 2s² 2p⁶</p>
+      <p class="sub">En los cationes, los electrones se quitan de la última capa.</p></div>
+    <div class="panel rule"><span class="num">Forma abreviada</span>
+      <p>Se sustituye la parte que coincide con el <b>gas noble anterior</b> por su símbolo entre corchetes.</p>
+      <p class="mono" style="font-size:.92rem">Na: 1s² 2s² 2p⁶ 3s¹ = [Ne] 3s¹<br>K: [Ar] 4s¹</p></div>
+  </div>
+</section>
+</div>
+
+<div class="part">
+<div class="partHead"><span class="tag">Parte 2 · Interactivo</span><h2 style="font-size:1.9rem">Ahora hazlo tú</h2>
+<p class="lead">Primero construye configuraciones con ayuda. Después explora cualquier elemento y ponte a prueba.</p></div>
+
+<section aria-labelledby="t-build">
+  <h2 id="t-build">8 · Constructor guiado</h2>
+  <div class="panel" style="display:flex;flex-direction:column;gap:14px">
+    <div class="row" style="justify-content:space-between;align-items:flex-end">
+      <div><div class="lbl">Elemento</div><div class="name" id="bName"></div></div>
+      <div style="text-align:right"><div class="lbl">Electrones que quedan</div><div class="build-left" id="bLeft"></div></div>
+    </div>
+    <div><div class="lbl">Tu configuración</div><div class="conf" id="bConf">—</div></div>
+    <div id="bAsk" style="display:flex;flex-direction:column;gap:8px"></div>
+    <div class="note" id="bFb"></div>
+    <div class="row"><button class="btn primary" id="bNew">Otro elemento →</button></div>
+  </div>
+</section>
+<section aria-labelledby="t-pick">
+  <h2 id="t-pick">9 · Explora cualquier elemento</h2>
+  <div class="panel">
+    <div class="pt-scroll"><div class="pt" id="pt"></div></div>
+    <div class="legend" style="margin-top:10px">
+      <span style="--c:var(--s)">bloque s</span><span style="--c:var(--p)">bloque p</span><span style="--c:var(--d)">bloque d</span>
+      <span>El color de cada casilla indica en qué subnivel entra su último electrón.</span>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="t-bench">
+  <h2 id="t-bench">10 · Su configuración, orbitales y Moeller</h2>
+  <div class="bench">
+    <div class="panel" style="display:flex;flex-direction:column;gap:14px">
+      <div class="tile">
+        <div class="sym"><span class="z" id="z"></span><span class="chg" id="chg"></span><span class="s" id="sym"></span></div>
+        <div><div class="name" id="name"></div><div class="sub" id="nelec"></div></div>
+      </div>
+      <div><div class="lbl">Configuración completa</div><div class="conf" id="full"></div></div>
+      <div><div class="lbl">Abreviada (con el gas noble anterior)</div><div class="conf" id="short"></div></div>
+      <div class="facts" id="facts"></div>
+      <div>
+        <div class="lbl" style="margin-bottom:6px">Convertir en ion (carga)</div>
+        <div class="row" id="ions"></div>
+      </div>
+      <div class="row">
+        <button class="btn primary" id="play">▶ Llenar electrón a electrón</button>
+        <button class="btn" id="prev" aria-label="Elemento anterior">← Z−1</button>
+        <button class="btn" id="next" aria-label="Elemento siguiente">Z+1 →</button>
+      </div>
+      <div class="note" id="note"></div>
+    </div>
+    <div class="panel" style="display:flex;flex-direction:column;gap:16px">
+      <div>
+        <div class="lbl" style="margin-bottom:8px">Diagrama de orbitales (cada caja = un orbital, máximo 2 electrones)</div>
+        <div class="orbs" id="orbs"></div>
+      </div>
+      <div class="moeller">
+        <div class="lbl" style="margin-bottom:4px">Diagrama de Moeller: se sigue cada flecha de arriba a abajo</div>
+        <svg id="moe" viewBox="0 0 330 345" role="img" aria-label="Diagrama de Moeller con el orden de llenado de los subniveles"></svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+<section aria-labelledby="t-rules">
+  <h2 id="t-rules">11 · Para saber más: las tres reglas y las excepciones</h2>
+  <div class="rules">
+    <div class="panel rule">
+      <span class="num">Aufbau (construcción)</span>
+      <p>Los electrones ocupan primero los subniveles de <b>menor energía</b>. El orden lo da el diagrama de Moeller o la regla <b>n + l</b>: menor suma primero; si empatan, el de menor <i>n</i>.</p>
+      <p class="mono" style="font-size:.85rem">1s 2s 2p 3s 3p <b>4s 3d</b> 4p 5s 4d 5p 6s 4f…</p>
+      <p class="sub">Por eso el 4s (4+0 = 4) se llena antes que el 3d (3+2 = 5).</p>
+    </div>
+    <div class="panel rule">
+      <span class="num">Exclusión de Pauli</span>
+      <p>En un orbital caben <b>como máximo 2 electrones</b> y deben tener <b>espines opuestos</b> (↑↓).</p>
+      <div class="mini">
+        <span><span class="boxes"><span class="box">↑↓</span></span> <span class="good">bien</span></span>
+        <span><span class="boxes"><span class="box">↑↑</span></span> <span class="wrong">mal</span></span>
+      </div>
+    </div>
+    <div class="panel rule">
+      <span class="num">Regla de Hund</span>
+      <p>En orbitales de la misma energía, los electrones se colocan <b>primero de uno en uno</b> con el mismo espín, y solo después se aparean.</p>
+      <div class="mini">
+        <span><span class="boxes"><span class="box">↑</span><span class="box">↑</span><span class="box">↑</span></span> <span class="good">bien (p³)</span></span>
+        <span><span class="boxes"><span class="box">↑↓</span><span class="box">↑</span><span class="box"></span></span> <span class="wrong">mal</span></span>
+      </div>
+    </div>
+  </div>
+  <div class="panel rule">
+    <span class="num">Excepciones que caen en el examen</span>
+    <p>El <b>cromo</b> y el <b>cobre</b> no siguen exactamente el Aufbau: un electrón del 4s pasa al 3d porque un subnivel d <b>semilleno (d⁵)</b> o <b>lleno (d¹⁰)</b> es más estable.</p>
+    <p class="mono" style="font-size:.92rem">Cr: [Ar] 4s¹ 3d⁵ (no 4s² 3d⁴) · Cu: [Ar] 4s¹ 3d¹⁰ (no 4s² 3d⁹)</p>
+    <p class="sub">Lo mismo pasa con Mo y Ag en el periodo 5. Pruébalo arriba: elige Cr y pulsa «Llenar».</p>
+  </div>
+  <div class="panel rule">
+    <span class="num">Iones</span>
+    <p><b>Anión</b> (carga −): se añaden electrones siguiendo el mismo orden. <b>Catión</b> (carga +): se quitan electrones de la <b>capa más externa</b> (mayor <i>n</i>) primero.</p>
+    <p class="mono" style="font-size:.92rem">Fe: [Ar] 4s² 3d⁶ → Fe²⁺: [Ar] 3d⁶ (se van los 4s, no los 3d)</p>
+  </div>
+</section>
+
+<section aria-labelledby="t-quiz">
+  <h2 id="t-quiz">12 · Ponte a prueba</h2>
+  <div class="panel quiz">
+    <div class="row" style="justify-content:space-between"><span class="lbl" id="qtype"></span><span class="score" id="score">0 / 0</span></div>
+    <div class="q" id="q"></div>
+    <div class="opts" id="opts"></div>
+    <div class="note" id="qfb"></div>
+    <div class="row"><button class="btn primary" id="qnext">Otra pregunta →</button></div>
+  </div>
+</section>
+</div>
+</div>
+
+<script>
+(function(){
+const EL="H Hidrógeno|He Helio|Li Litio|Be Berilio|B Boro|C Carbono|N Nitrógeno|O Oxígeno|F Flúor|Ne Neón|Na Sodio|Mg Magnesio|Al Aluminio|Si Silicio|P Fósforo|S Azufre|Cl Cloro|Ar Argón|K Potasio|Ca Calcio|Sc Escandio|Ti Titanio|V Vanadio|Cr Cromo|Mn Manganeso|Fe Hierro|Co Cobalto|Ni Níquel|Cu Cobre|Zn Zinc|Ga Galio|Ge Germanio|As Arsénico|Se Selenio|Br Bromo|Kr Kriptón|Rb Rubidio|Sr Estroncio|Y Itrio|Zr Circonio|Nb Niobio|Mo Molibdeno|Tc Tecnecio|Ru Rutenio|Rh Rodio|Pd Paladio|Ag Plata|Cd Cadmio|In Indio|Sn Estaño|Sb Antimonio|Te Teluro|I Yodo|Xe Xenón|Cs Cesio|Ba Bario".split('|').map(s=>{const [sy,...n]=s.split(' ');return{sy,name:n.join(' ')}});
+const MAXZ=EL.length;
+const AUF=['1s','2s','2p','3s','3p','4s','3d','4p','5s','4d','5p','6s','4f','5d','6p','7s','5f','6d','7p'];
+const CAP={s:2,p:6,d:10,f:14}, LIDX='spdf';
+const EXC={24:{'4s':1,'3d':5},29:{'4s':1,'3d':10},41:{'5s':1,'4d':4},42:{'5s':1,'4d':5},44:{'5s':1,'4d':7},45:{'5s':1,'4d':8},46:{'5s':0,'4d':10},47:{'5s':1,'4d':10}};
+const NG={2:'He',10:'Ne',18:'Ar',36:'Kr',54:'Xe'};
+const $=id=>document.getElementById(id);
+const sum=c=>Object.values(c).reduce((a,b)=>a+b,0);
+function aufbau(e){const c={};for(const o of AUF){if(e<=0)break;const k=Math.min(CAP[o[1]],e);c[o]=k;e-=k}return c}
+function real(Z){const c=aufbau(Z);if(EXC[Z])Object.assign(c,EXC[Z]);for(const k in c)if(!c[k])delete c[k];return c}
+function ion(Z,q){const c=real(Z);
+  if(q<0){let a=-q;for(const o of AUF){while(a>0&&(c[o]||0)<CAP[o[1]]){c[o]=(c[o]||0)+1;a--}if(!a)break}}
+  if(q>0){for(let i=0;i<q;i++){const ks=Object.keys(c);if(!ks.length)break;ks.sort((x,y)=>(+y[0]-+x[0])||(LIDX.indexOf(y[1])-LIDX.indexOf(x[1])));const o=ks[0];c[o]--;if(!c[o])delete c[o]}}
+  return c}
+const order=c=>AUF.filter(o=>c[o]);
+const html=(c,keys)=>(keys||order(c)).map(o=>`<span class="o">${o}<sup>${c[o]}</sup></span>`).join('');
+const sup=n=>String(n).split('').map(d=>'⁰¹²³⁴⁵⁶⁷⁸⁹'[d]).join('');
+const plain=c=>order(c).map(o=>o+sup(c[o])).join(' ');
+function core(c){const t=sum(c);
+  for(const ng of [54,36,18,10,2]){if(ng>t)continue;const g=aufbau(ng);if(Object.keys(g).every(o=>c[o]===g[o])){
+    const rest=order(c).filter(o=>!(o in g));return{ng,rest,iso:ng===t}}}
+  return null}
+function shortHTML(c){const k=core(c);if(!k)return html(c);
+  if(k.iso)return `[${NG[k.ng]}] <span class="sub" style="font-family:var(--body)">· tiene la misma configuración que el ${NG[k.ng]} (isoelectrónico)</span>`;
+  return `<span class="o">[${NG[k.ng]}]</span>`+html(c,k.rest)}
+function shortPlain(c){const k=core(c);if(!k)return plain(c);return `[${NG[k.ng]}] `+k.rest.map(o=>o+sup(c[o])).join(' ')}
+function unpaired(c){let u=0;for(const o in c){const m=CAP[o[1]]/2,e=c[o];u+=e<=m?e:2*m-e}return u}
+function blockOf(Z){const a=aufbau(Z);const ks=order(a);return ks[ks.length-1][1]}
+function info(Z){const a=aufbau(Z),r=real(Z),b=blockOf(Z),period=Math.max(...Object.keys(r).map(o=>+o[0]));
+  let group;const last=order(a).pop();
+  if(Z===2)group=18;else if(b==='s')group=a[last];else if(b==='p')group=12+a[last];else if(b==='d')group=a[last]+2;
+  return{period,group,block:b}}
+function shells(c){const s={};for(const o in c)s[o[0]]=(s[o[0]]||0)+c[o];return Object.keys(s).sort().map(n=>s[n])}
+const POS=Z=>{const P=[[1,1],[1,18]];if(Z<=2)return P[Z-1];
+  const per=[[3,10,2],[11,18,3]];for(const [a,b,p] of per)if(Z>=a&&Z<=b){const i=Z-a;return[p,i<2?i+1:i+11]}
+  if(Z<=36)return[4,Z-18];if(Z<=54)return[5,Z-36];return[6,Z-54]};
+const COLV={s:'var(--s)',p:'var(--p)',d:'var(--d)',f:'var(--f)'};
+
+let Z=26,Q=0,anim=null,animN=null;
+
+// tabla
+const pt=$('pt');
+for(let z=1;z<=MAXZ;z++){const [r,c]=POS(z),b=document.createElement('button');b.className='el';b.style.gridRow=r;b.style.gridColumn=c;b.style.setProperty('--blk',COLV[blockOf(z)]);
+  b.innerHTML=`<small>${z}</small><b>${EL[z-1].sy}</b>`;b.setAttribute('aria-label',`${EL[z-1].name}, Z = ${z}`);b.dataset.z=z;pt.appendChild(b)}
+pt.addEventListener('click',e=>{const b=e.target.closest('[data-z]');if(b){stop();Z=+b.dataset.z;Q=0;render()}});
+
+// iones
+const IONS=[-3,-2,-1,0,1,2,3];
+$('ions').innerHTML=IONS.map(q=>`<button class="chip" data-q="${q}">${q>0?'+'+q:q===0?'neutro':q}</button>`).join('');
+$('ions').addEventListener('click',e=>{const b=e.target.closest('[data-q]');if(b){stop();Q=+b.dataset.q;if(Q>=Z)Q=0;render()}});
+
+function charge(q){if(!q)return'';return (Math.abs(q)>1?Math.abs(q):'')+(q>0?'+':'−')}
+function renderOrbs(c,newest){
+  $('orbs').innerHTML=order(c).map(o=>{const m=CAP[o[1]]/2,e=c[o];let bx='';
+    for(let i=0;i<m;i++){const up=i<Math.min(e,m),dn=i<e-m;const isNew=newest===o&&((e<=m&&i===e-1)||(e>m&&i===e-m-1));
+      bx+=`<span class="box${isNew?' new':''}">${up?'↑':''}${dn?'↓':''}</span>`}
+    return `<div class="ob" style="--c:${COLV[o[1]]}"><div class="boxes">${bx}</div><span class="t">${o}<sup>${e}</sup></span></div>`}).join('')||'<span class="sub">Sin electrones.</span>'}
+function renderMoeller(c){
+  const cells=AUF.map(o=>({o,n:+o[0],l:LIDX.indexOf(o[1])}));
+  const X=l=>48+l*72,Y=n=>28+(n-1)*44;
+  let s='<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs><g style="color:var(--muted)">';
+  for(let k=1;k<=8;k++){const d=cells.filter(x=>x.n+x.l===k).sort((a,b)=>a.n-b.n);if(!d.length)continue;
+    const a=d[0],b=d[d.length-1];const x1=X(a.l)+30,y1=Y(a.n)-19,x2=X(b.l)-30,y2=Y(b.n)+19;
+    s+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="currentColor" stroke-width="1.6" opacity=".55" marker-end="url(#ah)"/>`}
+  s+='</g>';
+  cells.forEach(({o,n,l})=>{const e=c[o]||0,cap=CAP[o[1]],col=COLV[o[1]];const full=e===cap,part=e>0&&!full;
+    s+=`<g><rect x="${X(l)-22}" y="${Y(n)-15}" width="44" height="30" rx="8" fill="${e?col:'var(--surface)'}" fill-opacity="${full?1:part?.35:1}" stroke="${e?col:'var(--line)'}" stroke-width="2"/>
+    <text x="${X(l)}" y="${Y(n)+5}" text-anchor="middle" font-family="JetBrains Mono, monospace" font-weight="700" font-size="13" fill="${full?'#fff':'var(--ink)'}">${o}${e?`<tspan font-size="9" dy="-6">${e}</tspan>`:''}</text></g>`});
+  $('moe').innerHTML=s}
+
+function render(newest){
+  const n=animN!==null?animN:null;
+  const c=n!==null?aufbau(n):ion(Z,Q);
+  const e=sum(c);
+  document.querySelectorAll('.el').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.z===Z));
+  document.querySelectorAll('[data-q]').forEach(b=>{b.classList.toggle('sel',+b.dataset.q===Q);b.disabled=+b.dataset.q>=Z});
+  $('z').textContent=Z;$('sym').textContent=EL[Z-1].sy;$('chg').textContent=charge(Q);
+  $('name').textContent=EL[Z-1].name+(Q?` (ion ${EL[Z-1].sy}${charge(Q)})`:'');
+  $('nelec').textContent=`${Z} protones · ${e} electrones`+(n!==null?' (llenando…)':'');
+  $('full').innerHTML=e?html(c):'—';
+  $('short').innerHTML=e?shortHTML(c):'—';
+  const inf=info(Z),sh=shells(c);
+  $('facts').innerHTML=[
+    ['Periodo',inf.period,'= nivel más alto ocupado'],
+    ['Grupo',inf.group,''],
+    ['Bloque',inf.block,'último subnivel'],
+    ['Desapareados',unpaired(c),'electrones solos'],
+    ['Electrones por capa',sh.join(' · '),''],
+    ['Última capa',sh.length?sh[sh.length-1]:0,'electrones de valencia*']
+  ].map(([k,v,h])=>`<div class="fact"><div class="lbl">${k}</div><div class="v">${v}</div>${h?`<div class="sub" style="font-size:.78rem">${h}</div>`:''}</div>`).join('');
+  renderOrbs(c,newest);renderMoeller(c);
+  let note='';
+  if(n===null){
+    if(EXC[Z]&&!Q){const a=aufbau(Z);note=`<b>Excepción.</b> Por Aufbau saldría ${shortPlain(a)}, pero la real es <b>${shortPlain(real(Z))}</b>: un subnivel d semilleno o lleno es más estable.`}
+    else if(Q>0&&inf.block==='d')note=`<b>Catión de metal de transición:</b> primero se quitan los electrones del nivel más alto (${Math.max(...Object.keys(real(Z)).map(o=>+o[0]))}s), no los del ${inf.period-1}d.`;
+    else if(Q>0)note=`<b>Catión:</b> pierde ${Q} electrón${Q>1?'es':''} de la capa más externa.`;
+    else if(Q<0)note=`<b>Anión:</b> gana ${-Q} electrón${Q<-1?'es':''}, que entran en el siguiente hueco libre.`;
+    else if(inf.block==='d')note='*En los metales de transición, los electrones de valencia son los del último <i>s</i> más los del <i>d</i> que se está llenando.';
+  } else note=`Electrón nº ${n} → entra en <b>${newest}</b>.`;
+  $('note').innerHTML=note;
+}
+function stop(){if(anim){clearInterval(anim);anim=null}animN=null;$('play').textContent='▶ Llenar electrón a electrón'}
+$('play').addEventListener('click',()=>{
+  if(anim){stop();render();return}
+  Q=0;animN=0;$('play').textContent='■ Parar';
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const step=()=>{animN++;const c=aufbau(animN);const newest=order(c).pop();render(newest);
+    if(animN>=Z){clearInterval(anim);anim=null;setTimeout(()=>{animN=null;$('play').textContent='▶ Llenar electrón a electrón';render()},reduce?0:900)}};
+  if(reduce){animN=Z-1;step()}else anim=setInterval(step,Z>30?160:300);
+});
+$('prev').addEventListener('click',()=>{stop();if(Z>1){Z--;Q=0;render()}});
+$('next').addEventListener('click',()=>{stop();if(Z<MAXZ){Z++;Q=0;render()}});
+
+// práctica
+let ok=0,tot=0,answered=false;
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+function makeQ(){
+  answered=false;$('qfb').innerHTML='';
+  const t=rnd(0,2);let q,opts,right,expl;
+  if(t===0){const z=rnd(3,36);right=shortPlain(real(z));const set=new Set([right]);
+    if(EXC[z])set.add(shortPlain(aufbau(z)));
+    for(const d of [1,-1,2,-2]){if(set.size>=4)break;const zz=z+d;if(zz>=1&&zz<=MAXZ)set.add(shortPlain(real(zz)))}
+    opts=shuffle([...set].slice(0,4));q=`¿Cuál es la configuración del ${EL[z-1].name} (Z = ${z})?`;
+    expl=`${EL[z-1].sy}: ${right}. Cuenta: los superíndices suman ${z}.`;$('qtype').textContent='Escribe la configuración'}
+  else if(t===1){const z=rnd(3,36);const c=shortPlain(real(z));right=EL[z-1].name;const set=new Set([right]);
+    for(const d of [1,-1,2,-2,3]){if(set.size>=4)break;const zz=z+d;if(zz>=1&&zz<=MAXZ)set.add(EL[zz-1].name)}
+    opts=shuffle([...set]);q=`¿Qué elemento tiene la configuración ${c}?`;expl=`Suma los electrones: ${z} → Z = ${z}, el ${EL[z-1].name}.`;$('qtype').textContent='Identifica el elemento'}
+  else{const z=rnd(1,36);const u=unpaired(real(z));right=String(u);const set=new Set([right]);let k=0;while(set.size<4)set.add(String(k++));
+    opts=shuffle([...set]);q=`¿Cuántos electrones desapareados tiene el ${EL[z-1].name} (${shortPlain(real(z))})?`;
+    expl=`Mira el último subnivel y aplica Hund: primero uno en cada orbital, luego se aparean. Resultado: ${u}.`;$('qtype').textContent='Regla de Hund'}
+  $('q').textContent=q;
+  $('opts').innerHTML=opts.map(o=>`<button class="opt" data-a="${o}">${o}</button>`).join('');
+  $('opts').dataset.right=right;$('opts').dataset.expl=expl;
+}
+$('opts').addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b||answered)return;answered=true;tot++;
+  const right=$('opts').dataset.right,good=b.dataset.a===right;if(good)ok++;
+  document.querySelectorAll('.opt').forEach(x=>{if(x.dataset.a===right)x.classList.add('ok');else if(x===b)x.classList.add('no')});
+  $('qfb').innerHTML=(good?'<b>¡Correcto!</b> ':'<b>Casi.</b> ')+$('opts').dataset.expl;$('score').textContent=`${ok} / ${tot}`});
+$('qnext').addEventListener('click',makeQ);
+
+render();makeQ();
+
+// ---- teoría: línea de orden y Moeller vacío
+$('orderline').innerHTML=AUF.slice(0,15).map((o,i)=>`<span style="--c:${COLV[o[1]]}">${o}<small>${i+1}</small></span>`).join('');
+(function(){const save=$('moe').innerHTML;renderMoeller({});$('moeT').innerHTML=$('moe').innerHTML.replace(/id="ah"/,'id="ah2"').replace(/url\(#ah\)/g,'url(#ah2)');})();
+
+// ---- ejemplos resueltos
+const EXS=[8,11,17,20,26];let ex=8,exStep=0;
+function exRows(z){const r=[];let left=z;for(const o of AUF){if(left<=0)break;const k=Math.min(CAP[o[1]],left);left-=k;r.push([o,k,left])}return r}
+function exRender(){const r=exRows(ex);
+  $('exPick').innerHTML=EXS.map(z=>`<button class="chip${z===ex?' sel':''}" data-ex="${z}">${EL[z-1].sy} · ${EL[z-1].name}</button>`).join('');
+  $('exIntro').innerHTML=`<b>${EL[ex-1].name}</b>: Z = ${ex} → tiene <b>${ex} electrones</b> que colocar. Seguimos el orden de Moeller y llenamos cada subnivel al máximo.`;
+  $('exBody').innerHTML=r.map(([o,k,l],i)=>`<tr class="${i<exStep?'':'hide'}"><td>${i+1}</td><td class="m">${o}</td><td class="m">${k}${k<CAP[o[1]]?` <span class="sub">(no llega al máximo de ${CAP[o[1]]})</span>`:''}</td><td>${l}</td></tr>`).join('');
+  const done=exStep>=r.length;$('exNext').disabled=done;
+  const c=real(ex);
+  $('exRes').innerHTML=done?`Resultado: <span class="result">${plain(c)}</span><br>Comprobación: ${r.map(x=>x[1]).join(' + ')} = <b>${ex}</b> ✓ · Abreviada: <span class="mono">${shortPlain(c)}</span>`:'';
+}
+$('exPick').addEventListener('click',e=>{const b=e.target.closest('[data-ex]');if(b){ex=+b.dataset.ex;exStep=0;exRender()}});
+$('exNext').addEventListener('click',()=>{exStep++;exRender()});
+$('exAll').addEventListener('click',()=>{exStep=99;exRender()});
+exRender();
+
+// ---- constructor guiado
+const BZ=[];for(let z=3;z<=36;z++)if(!EXC[z])BZ.push(z);
+let bz,bLeft,bIdx,bConf,bPhase;
+function bStart(){bz=BZ[Math.floor(Math.random()*BZ.length)];bLeft=bz;bIdx=0;bConf={};bPhase='sub';$('bFb').innerHTML='';bRender()}
+function bRender(){
+  $('bName').textContent=`${EL[bz-1].name} (${EL[bz-1].sy}) · Z = ${bz}`;
+  $('bLeft').textContent=bLeft;
+  $('bConf').innerHTML=Object.keys(bConf).length?html(bConf):'—';
+  if(bLeft===0){$('bAsk').innerHTML=`<div class="result">¡Terminado! ${plain(bConf)}</div><div class="sub">Comprobación: la suma de superíndices es ${bz} = Z ✓</div>`;return}
+  const right=AUF[bIdx];
+  if(bPhase==='sub'){
+    const opts=new Set([right]);
+    const traps={'4s':'3d','5s':'4d','3d':'4s'};if(traps[right]&&!bConf[traps[right]])opts.add(traps[right]);
+    for(const o of AUF.slice(bIdx+1)){if(opts.size>=4)break;opts.add(o)}
+    const arr=[...opts].sort(()=>Math.random()-.5);
+    $('bAsk').innerHTML=`<div class="q">Paso ${bIdx+1}: ¿qué subnivel toca ahora?</div><div class="choice">${arr.map(o=>`<button class="chip" data-bs="${o}">${o}</button>`).join('')}</div>`;
+  } else {
+    const cap=CAP[right[1]];let b='';for(let k=1;k<=cap;k++)b+=`<button class="chip" data-bk="${k}">${k}</button>`;
+    $('bAsk').innerHTML=`<div class="q">¿Cuántos electrones pones en ${right}? <span class="sub">(caben ${cap}, te quedan ${bLeft})</span></div><div class="choice">${b}</div>`;
+  }
+}
+$('bAsk').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const right=AUF[bIdx];
+  if(b.dataset.bs){if(b.dataset.bs===right){bPhase='num';$('bFb').innerHTML=`<b>Bien.</b> Después de ${bIdx?AUF[bIdx-1]:'empezar'} viene <b>${right}</b>.`;bRender()}
+    else{b.classList.add('no');$('bFb').innerHTML=(right==='4s'&&b.dataset.bs==='3d')?'<b>Trampa típica.</b> Según Moeller, el <b>4s va antes que el 3d</b>.':`<b>No.</b> Sigue las diagonales de Moeller: ${AUF.slice(0,bIdx+1).join(' → ')}…`}}
+  if(b.dataset.bk){const k=+b.dataset.bk,should=Math.min(CAP[right[1]],bLeft);
+    if(k===should){bConf[right]=k;bLeft-=k;bIdx++;bPhase='sub';$('bFb').innerHTML=bLeft?`<b>Correcto.</b> Pones ${k} y te quedan ${bLeft}.`:'';bRender()}
+    else{b.classList.add('no');$('bFb').innerHTML=k<should?`<b>No.</b> Te quedan ${bLeft} electrones: hay que <b>llenar ${right} al máximo</b> (${should}) antes de pasar al siguiente.`:`<b>No.</b> Solo te quedan ${bLeft} electrones, no puedes poner ${k}.`}}
+});
+$('bNew').addEventListener('click',bStart);
+bStart();render();
+
+})();
+</script>
+
+</html>
